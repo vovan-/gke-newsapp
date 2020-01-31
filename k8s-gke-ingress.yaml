@@ -1,0 +1,12 @@
+apiVersion: extensions/v1beta1 # GKE runs on version 13 of k8s, so other api is used
+kind: Ingress
+metadata:
+  name: news-app-ingress
+spec:
+  rules:
+    - http:
+        paths:
+          - path: /*
+            backend:
+              serviceName: news-app-service
+              servicePort: 80

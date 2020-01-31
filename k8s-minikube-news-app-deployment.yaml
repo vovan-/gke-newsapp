@@ -1,0 +1,84 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-config
+  labels:
+    app: postgres
+data:
+  POSTGRES_DB: news
+  POSTGRES_USER: postgres
+  POSTGRESS_PASSWORD: mysecretpassword
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres-service
+  labels:
+    app: postgres
+spec:
+  ports:
+    - port: 5432
+      name: postgres-port
+  selector:
+    app: postgres
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:12
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - configMapRef:
+                name: postgres-config
+---
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: news-app-service
+  labels:
+    app: news-app
+spec:
+  ports:
+    - port: 8080
+      name: news-app-port
+  selector:
+    app: news-app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: news-app
+spec:
+  selector:
+    matchLabels:
+      app: news-app
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: news-app
+    spec:
+      containers:
+        - name: news-app
+          image: vnhub/newsapp:0.0.1-SNAPSHOT
+          ports:
+            - containerPort: 8080
+          imagePullPolicy: Always
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "k8s"
